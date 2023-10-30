@@ -64,3 +64,19 @@ func (ctl *Controller) DeleteUser(c *gin.Context) {
 	}
 	response.JSON(c, "Successfully deleted user", "Success", 0, 0)
 }
+
+func (ctl *Controller) LoginUser(c *gin.Context) {
+	userLogin := &model.LoginRequest{}
+	err := c.ShouldBindJSON(userLogin)
+	if err != nil {
+		logrus.Error("json bind error :: ", err)
+		response.ERROR(c, err, http.StatusBadRequest)
+		return
+	}
+	token, code, err := ctl.svc.LoginUser(userLogin)
+	if err != nil {
+		response.ERROR(c, err, code)
+		return
+	}
+	response.JSON(c, token, "Success", 0, 0)
+}
