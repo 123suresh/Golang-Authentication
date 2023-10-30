@@ -3,6 +3,8 @@ package model
 import (
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +37,7 @@ func NewUser(req *UserRequest) *User {
 
 type UserResponse struct {
 	ID        uint      `json:"id"`
-	CreatedAt time.Time `json:"createdAt`
+	CreatedAt time.Time `json:"createdAt"`
 	FirstName string    `json:"first_name"`
 	LastName  string    `json:"last_name"`
 	Email     string    `json:"email"`
@@ -53,4 +55,32 @@ func (u *User) UserRes() *UserResponse {
 		Password:  u.Password,
 		Role:      u.Role,
 	}
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginToken struct {
+	AccessToken string        `json:"access_token"`
+	User        *UserResponse `json:"user"`
+}
+
+type Payload struct {
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	IssuedAt  time.Time `json:"issued_at"`
+	ExpiredAt time.Time `json:"expired_at"`
+}
+
+func (p *Payload) Valid() error {
+	// Check if the token has expired
+	if time.Now().After(p.ExpiredAt) {
+		return jwt.NewValidationError("token is expired", jwt.ValidationErrorExpired)
+	}
+
+	// You can add more validation logic here if needed
+
+	return nil
 }
