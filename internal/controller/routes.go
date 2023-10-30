@@ -1,14 +1,26 @@
 package controller
 
+import (
+	"example.com/dynamicWordpressBuilding/internal/middleware"
+	"example.com/dynamicWordpressBuilding/utils"
+	"github.com/gin-gonic/gin"
+)
+
 func (ctl *Controller) Routes() {
 	ctl.Router.GET("/", home)
-	ctl.userRoutes()
+	ctl.publicRoutes()
+	//middleware
+	authRouter := ctl.Router.Group("/").Use(middleware.AuthMiddleware(utils.NewTokenMaker()))
+	ctl.privateRoutes(authRouter)
 }
 
-func (ctl *Controller) userRoutes() {
+func (ctl *Controller) publicRoutes() {
 	ctl.Router.POST("/user", ctl.CreateUser)
-	ctl.Router.GET("/alluser", ctl.GetAllUser)
-	ctl.Router.GET("/user/:id", ctl.GetUser)
-	ctl.Router.DELETE("/user/:id", ctl.DeleteUser)
 	ctl.Router.POST("/user/login", ctl.LoginUser)
+}
+
+func (ctl *Controller) privateRoutes(authRouter gin.IRoutes) {
+	authRouter.GET("/alluser", ctl.GetAllUser)
+	authRouter.GET("/user/:id", ctl.GetUser)
+	authRouter.DELETE("/user/:id", ctl.DeleteUser)
 }
