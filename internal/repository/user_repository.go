@@ -11,6 +11,8 @@ type UserInterface interface {
 	GetAllUser() ([]model.User, error)
 	GetUser(uid int) (*model.User, error)
 	DeleteUser(uid int) error
+	LoginUser(email string) (*model.User, error)
+	EmailExistCheck(email string) (bool, error)
 }
 
 func (r *Repo) CreateUser(data *model.User) (*model.User, error) {
@@ -46,4 +48,22 @@ func (r *Repo) DeleteUser(uid int) error {
 		return err
 	}
 	return nil
+}
+
+func (r *Repo) LoginUser(email string) (*model.User, error) {
+	data := &model.User{}
+	err := r.db.Model(&model.User{}).Where("email=?", email).Take(&data).Error
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (r *Repo) EmailExistCheck(email string) (bool, error) {
+	data := &model.User{}
+	err := r.db.Model(&model.User{}).Where("email = ?", email).Take(&data).Error
+	if err == nil {
+		return true, fmt.Errorf("user email already exists %v ", err)
+	}
+	return false, nil
 }

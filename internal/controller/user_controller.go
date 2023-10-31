@@ -16,12 +16,15 @@ func (controller *Controller) CreateUser(c *gin.Context) {
 	if err != nil {
 		logrus.Error("json bind error :: ", err)
 		response.ERROR(c, err, http.StatusBadRequest)
+		return
 	}
 	userResponse, code, err := controller.svc.CreateUser(userReq)
 	if err != nil {
+		logrus.Info("code ", code, err)
 		response.ERROR(c, err, code)
 		return
 	}
+	logrus.Info(" success code ", code, err)
 	response.JSON(c, userResponse, "Success", 0, 0)
 }
 
@@ -63,4 +66,20 @@ func (ctl *Controller) DeleteUser(c *gin.Context) {
 		return
 	}
 	response.JSON(c, "Successfully deleted user", "Success", 0, 0)
+}
+
+func (ctl *Controller) LoginUser(c *gin.Context) {
+	userLogin := &model.LoginRequest{}
+	err := c.ShouldBindJSON(userLogin)
+	if err != nil {
+		logrus.Error("json bind error :: ", err)
+		response.ERROR(c, err, http.StatusBadRequest)
+		return
+	}
+	token, code, err := ctl.svc.LoginUser(userLogin)
+	if err != nil {
+		response.ERROR(c, err, code)
+		return
+	}
+	response.JSON(c, token, "Success", 0, 0)
 }
