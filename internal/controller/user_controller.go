@@ -16,12 +16,15 @@ func (controller *Controller) CreateUser(c *gin.Context) {
 	if err != nil {
 		logrus.Error("json bind error :: ", err)
 		response.ERROR(c, err, http.StatusBadRequest)
+		return
 	}
 	userResponse, code, err := controller.svc.CreateUser(userReq)
 	if err != nil {
+		logrus.Info("code ", code, err)
 		response.ERROR(c, err, code)
 		return
 	}
+	logrus.Info(" success code ", code, err)
 	response.JSON(c, userResponse, "Success", 0, 0)
 }
 
