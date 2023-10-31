@@ -19,6 +19,14 @@ type IUser interface {
 
 func (s Service) CreateUser(req *model.UserRequest) (*model.UserResponse, int, error) {
 	user := model.NewUser(req)
+	//check email
+	emailExist, err := s.repo.EmailExistCheck(user.Email)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+	if emailExist {
+		return nil, http.StatusBadRequest, err
+	}
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
