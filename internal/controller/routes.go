@@ -17,6 +17,8 @@ func (ctl *Controller) Routes() {
 func (ctl *Controller) publicRoutes() {
 	ctl.Router.POST("/user", ctl.CreateUser)
 	ctl.Router.POST("/user/login", ctl.LoginUser)
+	ctl.Router.POST("/user/reset-password", ctl.ResetPassword)
+	// ctl.Router.POST("/user/forget-password", ctl.ForgetPassword)
 }
 
 func (ctl *Controller) privateRoutes(authRouter gin.IRoutes) {

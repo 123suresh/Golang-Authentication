@@ -84,3 +84,13 @@ func (p *Payload) Valid() error {
 
 	return nil
 }
+
+type ResetPasswordReq struct {
+	Email string `json:"email"`
+}
+
+type ResetPassword struct {
+	gorm.Model
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
