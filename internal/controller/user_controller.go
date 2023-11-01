@@ -83,3 +83,19 @@ func (ctl *Controller) LoginUser(c *gin.Context) {
 	}
 	response.JSON(c, token, "Success", 0, 0)
 }
+
+func (ctl *Controller) ResetPassword(c *gin.Context) {
+	forgetPassReq := &model.ResetPasswordReq{}
+	err := c.ShouldBindJSON(forgetPassReq)
+	if err != nil {
+		logrus.Error("json bind error :: ", err)
+		response.ERROR(c, err, http.StatusBadRequest)
+		return
+	}
+	resetDetails, code, err := ctl.svc.ResetPassword(forgetPassReq)
+	if err != nil {
+		response.ERROR(c, err, code)
+		return
+	}
+	response.JSON(c, resetDetails, "Success", 0, 0)
+}

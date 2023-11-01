@@ -26,6 +26,7 @@ func InitializeDB() *gorm.DB {
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	db.AutoMigrate(
 		model.User{},
+		model.ResetPassword{},
 	)
 	return db
 }

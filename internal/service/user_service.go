@@ -1,12 +1,14 @@
 package service
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"time"
 
 	"example.com/dynamicWordpressBuilding/internal/model"
 	"example.com/dynamicWordpressBuilding/utils"
+	"example.com/dynamicWordpressBuilding/utils/security"
 )
 
 type IUser interface {
@@ -15,17 +17,15 @@ type IUser interface {
 	GetUser(uid int) (*model.UserResponse, int, error)
 	DeleteUser(uid int) (int, error)
 	LoginUser(loginReq *model.LoginRequest) (*model.LoginToken, int, error)
+	ResetPassword(forgetPassReq *model.ResetPasswordReq) (*model.ResetPassword, int, error)
 }
 
 func (s Service) CreateUser(req *model.UserRequest) (*model.UserResponse, int, error) {
 	user := model.NewUser(req)
 	//check email
-	emailExist, err := s.repo.EmailExistCheck(user.Email)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
+	emailExist := s.repo.EmailExistCheck(user.Email)
 	if emailExist {
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, errors.New("email already taken")
 	}
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
@@ -99,4 +99,21 @@ func (s Service) LoginUser(loginReq *model.LoginRequest) (*model.LoginToken, int
 		User:        userData.UserRes(),
 	}
 	return response, http.StatusOK, nil
+}
+
+func (s Service) ResetPassword(forgetPassReq *model.ResetPasswordReq) (*model.ResetPassword, int, error) {
+	userEmail := s.repo.EmailExistCheck(forgetPassReq.Email)
+	if !userEmail {
+		return nil, http.StatusBadRequest, errors.New("email not found")
+	}
+	token := security.TokenHash(forgetPassReq.Email)
+	resetPassword := &model.ResetPassword{}
+	resetPassword.Email = forgetPassReq.Email
+	resetPassword.Token = token
+	resetDetails, err := s.repo.ResetPassword(resetPassword)
+	//Sending mail for reset
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return resetDetails, http.StatusOK, nil
 }
