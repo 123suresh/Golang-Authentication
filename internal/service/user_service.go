@@ -111,9 +111,10 @@ func (s Service) ResetPassword(forgetPassReq *model.ResetPasswordReq) (*model.Re
 	resetPassword.Email = forgetPassReq.Email
 	resetPassword.Token = token
 	resetDetails, err := s.repo.ResetPassword(resetPassword)
-	//Sending mail for reset
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
+	//Sending mail for reset
+	s.mailJet.SendResetPassword(resetDetails.Email, resetDetails.Token)
 	return resetDetails, http.StatusOK, nil
 }
