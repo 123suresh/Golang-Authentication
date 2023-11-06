@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.3.1
 	github.com/joho/godotenv v1.5.1
+	github.com/mailjet/mailjet-apiv3-go/v3 v3.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/twinj/uuid v1.0.0
 	golang.org/x/crypto v0.9.0
