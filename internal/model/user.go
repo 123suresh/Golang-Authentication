@@ -94,3 +94,9 @@ type ResetPassword struct {
 	Email string `json:"email"`
 	Token string `json:"token"`
 }
+
+type ForgetPassword struct {
+	NewPassword    string `json:"new_password"`
+	RetypePassword string `json:"retype_password"`
+	Token          string `json:"token"`
+}

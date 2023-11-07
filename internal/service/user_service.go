@@ -8,6 +8,7 @@ import (
 
 	"example.com/dynamicWordpressBuilding/internal/model"
 	"example.com/dynamicWordpressBuilding/utils"
+	cerr "example.com/dynamicWordpressBuilding/utils/error"
 	"example.com/dynamicWordpressBuilding/utils/security"
 )
 
@@ -18,6 +19,7 @@ type IUser interface {
 	DeleteUser(uid int) (int, error)
 	LoginUser(loginReq *model.LoginRequest) (*model.LoginToken, int, error)
 	ResetPassword(forgetPassReq *model.ResetPasswordReq) (*model.ResetPassword, int, error)
+	ForgetPassword(resetPassReq *model.ForgetPassword) (int, error)
 }
 
 func (s Service) CreateUser(req *model.UserRequest) (*model.UserResponse, int, error) {
@@ -104,7 +106,7 @@ func (s Service) LoginUser(loginReq *model.LoginRequest) (*model.LoginToken, int
 func (s Service) ResetPassword(forgetPassReq *model.ResetPasswordReq) (*model.ResetPassword, int, error) {
 	userEmail := s.repo.EmailExistCheck(forgetPassReq.Email)
 	if !userEmail {
-		return nil, http.StatusBadRequest, errors.New("email not found")
+		return nil, http.StatusBadRequest, cerr.ErrRequiredEmail
 	}
 	token := security.TokenHash(forgetPassReq.Email)
 	resetPassword := &model.ResetPassword{}
@@ -117,4 +119,35 @@ func (s Service) ResetPassword(forgetPassReq *model.ResetPasswordReq) (*model.Re
 	//Sending mail for reset
 	s.mailJet.SendResetPassword(resetDetails.Email, resetDetails.Token)
 	return resetDetails, http.StatusOK, nil
+}
+
+func (s Service) ForgetPassword(resetPassReq *model.ForgetPassword) (int, error) {
+	userDetails, err := s.repo.FindByToken(resetPassReq.Token)
+	if err != nil {
+		return http.StatusNotFound, nil
+	}
+	if !userDetails.DeletedAt.Time.IsZero() {
+		return http.StatusUnprocessableEntity, cerr.ErrTokenExpired
+	}
+	if resetPassReq.NewPassword == "" || resetPassReq.RetypePassword == "" {
+		return http.StatusUnprocessableEntity, cerr.ErrEmptyPassword
+	}
+	if resetPassReq.NewPassword != "" && resetPassReq.RetypePassword != "" {
+		if len(resetPassReq.NewPassword) < 6 || len(resetPassReq.RetypePassword) < 6 {
+			return http.StatusUnprocessableEntity, cerr.ErrPasswordLen
+		}
+		if resetPassReq.NewPassword != resetPassReq.RetypePassword {
+			return http.StatusUnprocessableEntity, cerr.ErrPasswordMatch
+		}
+		hashedPassword, err := utils.HashPassword(resetPassReq.NewPassword)
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+		resetPassReq.NewPassword = hashedPassword
+		err = s.repo.UpdatePassword(userDetails, resetPassReq)
+		if err != nil {
+			return http.StatusBadRequest, cerr.ErrUpdatePass
+		}
+	}
+	return http.StatusOK, nil
 }
