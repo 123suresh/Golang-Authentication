@@ -14,6 +14,8 @@ type UserInterface interface {
 	LoginUser(email string) (*model.User, error)
 	EmailExistCheck(email string) bool
 	ResetPassword(resetPass *model.ResetPassword) (*model.ResetPassword, error)
+	FindByToken(token string) (*model.ResetPassword, error)
+	UpdatePassword(resetDetail *model.ResetPassword, resetPassReq *model.ForgetPassword) error
 }
 
 func (r *Repo) CreateUser(data *model.User) (*model.User, error) {
@@ -75,4 +77,24 @@ func (r *Repo) ResetPassword(resetPass *model.ResetPassword) (*model.ResetPasswo
 		return nil, fmt.Errorf("error while doing reset password %v ", err)
 	}
 	return resetPass, nil
+}
+
+func (r *Repo) FindByToken(token string) (*model.ResetPassword, error) {
+	data := &model.ResetPassword{}
+	err := r.db.Model(&model.ResetPassword{}).Where("token = ?", token).Take(&data).Error
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (r *Repo) UpdatePassword(resetDetail *model.ResetPassword, resetPassReq *model.ForgetPassword) error {
+	err := r.db.Model(&model.User{}).Where("email = ?", resetDetail.Email).UpdateColumns(
+		map[string]interface{}{
+			"password": resetPassReq.NewPassword,
+		}).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
